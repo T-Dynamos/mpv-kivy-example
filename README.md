@@ -1,6 +1,10 @@
 # mpv-kivy-example
 
-Minimal standalone example demonstrating **`libmpv` (`0.42.0`)** hardware-accelerated video playback inside a **Kivy (`2.3.2`)** OpenGL / OpenGL ES widget on **Linux** and **Android (`arm64-v8a`)** using `python-for-android` local recipes.
+Minimal standalone example demonstrating **`libmpv` (`0.42.0`)** hardware-accelerated video playback inside a **Kivy (`2.3.2`)** OpenGL / OpenGL ES widget on 
+**Linux** and **Android (`arm64-v8a`)** using `python-for-android` local recipes.
+
+<img width="1920" height="1140" alt="image" src="https://github.com/user-attachments/assets/d68856cc-c13d-4d7a-9f51-681ad41fa874" />
+
 
 ## Features
 
