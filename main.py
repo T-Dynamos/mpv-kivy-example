@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-import ctypes
-import ctypes.util
-import glob
 import os
-import sys
 import threading
 
 from kivy.app import App
@@ -31,73 +27,6 @@ from kivy.uix.slider import Slider
 from kivy.uix.widget import Widget
 
 import mpv
-
-
-def _find_sdl():
-    for p in sys.path:
-        d = os.path.join(p, "kivy.libs")
-        if os.path.isdir(d):
-            for pat in ("libSDL3-*.so*", "libSDL2-*.so*"):
-                for f in glob.glob(os.path.join(d, pat)):
-                    bn = os.path.basename(f)
-                    if "ttf" not in bn and "mix" not in bn and "image" not in bn:
-                        return f
-    for name in ("SDL3", "SDL2"):
-        found = ctypes.util.find_library(name)
-        if found:
-            return found
-    for soname in ("libSDL2.so", "libSDL3.so"):
-        try:
-            ctypes.CDLL(soname)
-            return soname
-        except OSError:
-            continue
-    return None
-
-
-_sdl = ctypes.CDLL(_find_sdl())
-_sdl.SDL_GL_GetProcAddress.argtypes = [ctypes.c_char_p]
-_sdl.SDL_GL_GetProcAddress.restype = ctypes.c_void_p
-
-_GLPROC = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_char_p)
-
-
-def _get_proc(_, name):
-    return _sdl.SDL_GL_GetProcAddress(name)
-
-
-_get_proc_c = _GLPROC(_get_proc)
-_android_jvm_registered = False
-
-
-def ensure_android_java_vm():
-    """Register Android's JavaVM with FFmpeg so MediaCodec hardware decoding works."""
-    global _android_jvm_registered
-    if _android_jvm_registered or sys.platform != "android":
-        return
-    _android_jvm_registered = True
-    try:
-        _sdl.SDL_AndroidGetJNIEnv.restype = ctypes.c_void_p
-        jni_env = _sdl.SDL_AndroidGetJNIEnv()
-        if not jni_env:
-            return
-        fn_table = ctypes.cast(
-            jni_env, ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p))
-        ).contents
-        get_java_vm = ctypes.CFUNCTYPE(
-            ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)
-        )(fn_table[219])
-        java_vm = ctypes.c_void_p()
-        if get_java_vm(jni_env, ctypes.byref(java_vm)) == 0 and java_vm.value:
-            libavcodec = ctypes.CDLL("libavcodec.so")
-            libavcodec.av_jni_set_java_vm.argtypes = [
-                ctypes.c_void_p,
-                ctypes.c_void_p,
-            ]
-            libavcodec.av_jni_set_java_vm.restype = ctypes.c_int
-            libavcodec.av_jni_set_java_vm(java_vm, None)
-    except Exception:
-        pass
 
 
 class MpvVideoWidget(Widget):
@@ -130,7 +59,6 @@ class MpvVideoWidget(Widget):
             self._needs_render.set()
 
     def _init_mpv(self, _dt):
-        ensure_android_java_vm()
         self._player = mpv.MPV(
             vo="libmpv",
             hwdec="auto",
@@ -140,7 +68,6 @@ class MpvVideoWidget(Widget):
         self._ctx = mpv.MpvRenderContext(
             self._player,
             "opengl",
-            opengl_init_params={"get_proc_address": _get_proc_c},
             advanced_control=True,
         )
         self._ctx.update_cb = self._needs_render.set
