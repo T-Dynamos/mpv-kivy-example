@@ -14,7 +14,6 @@ Minimal standalone example demonstrating **`libmpv` (`0.42.0`)** hardware-accele
 ```text
 .
 ├── main.py                      # Kivy MpvVideoWidget + JavaVM setup + player controls
-├── mpv.py                       # python-mpv ctypes bindings (with Android libmpv.so fallback)
 ├── buildozer.spec               # Buildozer config (arm64-v8a, sdl2, local recipes)
 ├── assets/
 │   └── sample.mp4               # Bundled 720p H.264/AAC test clip
@@ -23,7 +22,10 @@ Minimal standalone example demonstrating **`libmpv` (`0.42.0`)** hardware-accele
     ├── harfbuzz/__init__.py
     ├── libass/__init__.py
     ├── libplacebo/__init__.py
-    └── mpv/__init__.py
+    ├── libmpv/__init__.py       # Native libmpv.so (0.42.0) Meson recipe
+    └── mpv/                     # python-mpv (1.0.8) PyProjectRecipe + Android patch
+        ├── __init__.py
+        └── android.patch
 ```
 
 ## Build & Run (Android `arm64-v8a`)
