@@ -13,7 +13,8 @@ Minimal standalone example demonstrating **`libmpv` (`0.42.0`)** hardware-accele
 
 ```text
 .
-├── main.py                      # Kivy MpvVideoWidget + JavaVM setup + player controls
+├── main.py                      # Kivy MpvVideoWidget + player controls
+├── mpvkivy.py                   # Linux/desktop SDL_GL_GetProcAddress monkey-patch for python-mpv
 ├── buildozer.spec               # Buildozer config (arm64-v8a, sdl2, local recipes)
 ├── assets/
 │   └── sample.mp4               # Bundled 720p H.264/AAC test clip

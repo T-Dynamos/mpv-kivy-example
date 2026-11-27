@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-import ctypes
-import ctypes.util
-import glob
 import os
-import sys
 import threading
 
 from kivy.app import App
@@ -32,44 +28,10 @@ from kivy.uix.widget import Widget
 
 import mpv
 
+if not hasattr(mpv, "sdl_opengl_init_params"):
+    import mpvkivy
 
-def _desktop_opengl_init_params():
-    """Provide SDL_GL_GetProcAddress on desktop where python-mpv isn't patched."""
-    sdl_path = None
-    for p in sys.path:
-        d = os.path.join(p, "kivy.libs")
-        if os.path.isdir(d):
-            for pat in ("libSDL3-*.so*", "libSDL2-*.so*"):
-                for f in glob.glob(os.path.join(d, pat)):
-                    bn = os.path.basename(f)
-                    if "ttf" not in bn and "mix" not in bn and "image" not in bn:
-                        sdl_path = f
-                        break
-                if sdl_path:
-                    break
-        if sdl_path:
-            break
-    if not sdl_path:
-        for name in ("SDL3", "SDL2"):
-            sdl_path = ctypes.util.find_library(name)
-            if sdl_path:
-                break
-    if not sdl_path:
-        for soname in ("libSDL2-2.0.so.0", "libSDL2.so", "libSDL3.so.0", "libSDL3.so"):
-            try:
-                ctypes.CDLL(soname)
-                sdl_path = soname
-                break
-            except OSError:
-                continue
-    sdl = ctypes.CDLL(sdl_path)
-    sdl.SDL_GL_GetProcAddress.argtypes = [ctypes.c_char_p]
-    sdl.SDL_GL_GetProcAddress.restype = ctypes.c_void_p
-    proc_t = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_char_p)
-    proc_cb = proc_t(lambda _, name: sdl.SDL_GL_GetProcAddress(name))
-    # Keep a reference on the function so ctypes callback stays alive.
-    _desktop_opengl_init_params._cb = proc_cb
-    return {"get_proc_address": proc_cb}
+    mpvkivy.patch(mpv)
 
 
 class MpvVideoWidget(Widget):
@@ -108,13 +70,10 @@ class MpvVideoWidget(Widget):
             loop_file="inf",
             loglevel="warn",
         )
-        ctx_kwargs = {"advanced_control": True}
-        if not hasattr(mpv, "sdl_opengl_init_params"):
-            ctx_kwargs["opengl_init_params"] = _desktop_opengl_init_params()
         self._ctx = mpv.MpvRenderContext(
             self._player,
             "opengl",
-            **ctx_kwargs,
+            advanced_control=True,
         )
         self._ctx.update_cb = self._needs_render.set
         self._update_rect()
