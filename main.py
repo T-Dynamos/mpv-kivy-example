@@ -11,6 +11,7 @@ from kivy.graphics.opengl import (
     GL_BLEND,
     GL_FRAMEBUFFER_BINDING,
     GL_SCISSOR_TEST,
+    GL_FRAMEBUFFER,
     GL_VIEWPORT,
     glActiveTexture,
     glBindFramebuffer,
@@ -101,7 +102,7 @@ class MpvVideoWidget(Widget):
         )
         self._fbo.release()
 
-        glBindFramebuffer(36160, prev_fbo)
+        glBindFramebuffer(GL_FRAMEBUFFER, prev_fbo)
         glViewport(*prev_vp)
         glActiveTexture(prev_active_tex)
         (glEnable if was_scissor else glDisable)(GL_SCISSOR_TEST)
@@ -135,7 +136,9 @@ class MpvExampleApp(App):
             os.path.join(os.path.dirname(__file__), "assets", "sample.mp4")
         )
 
-        self.status_lbl = Label(text="Initializing libmpv...", size_hint_y=None, height=40)
+        self.status_lbl = Label(
+            text="Initializing libmpv...", size_hint_y=None, height=40
+        )
         self.video = MpvVideoWidget(sample, on_status=self._update_status)
 
         controls = BoxLayout(size_hint_y=None, height=56, spacing=8)
@@ -162,7 +165,9 @@ class MpvExampleApp(App):
         params = player.video_params or {}
         res = f"{params.get('w', '?')}x{params.get('h', '?')}"
         state = "paused" if player.pause else "playing"
-        self.status_lbl.text = f"{res} | hwdec={hwdec} | {state} | {pos:.1f}s / {dur:.1f}s"
+        self.status_lbl.text = (
+            f"{res} | hwdec={hwdec} | {state} | {pos:.1f}s / {dur:.1f}s"
+        )
         if dur > 0:
             self.slider.value = min(1.0, max(0.0, pos / dur))
 
