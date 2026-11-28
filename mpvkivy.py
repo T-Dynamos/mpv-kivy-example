@@ -8,6 +8,8 @@ import glob
 import os
 import sys
 
+from kivy.logger import Logger
+
 _GET_PROC_CB = None
 
 
@@ -61,6 +63,7 @@ def _resolve_get_proc_fn():
             if get_ctx():
                 get_proc.argtypes = [ctypes.c_char_p]
                 get_proc.restype = ctypes.c_void_p
+                Logger.info(f"mpvkivy: using SDL GL proc lookup from {sdl_path}")
                 return get_proc
 
     for gl_name in ("libGL.so.1", "libGL.so"):
@@ -77,6 +80,7 @@ def _resolve_get_proc_fn():
             if get_ctx():
                 get_proc.argtypes = [ctypes.c_char_p]
                 get_proc.restype = ctypes.c_void_p
+                Logger.info(f"mpvkivy: using GLX proc lookup from {gl_name}")
                 return get_proc
 
     for egl_name in ("libEGL.so.1", "libEGL.so"):
@@ -91,6 +95,7 @@ def _resolve_get_proc_fn():
             if get_ctx():
                 get_proc.argtypes = [ctypes.c_char_p]
                 get_proc.restype = ctypes.c_void_p
+                Logger.info(f"mpvkivy: using EGL proc lookup from {egl_name}")
                 return get_proc
 
     raise RuntimeError("Could not locate an active SDL, GLX, or EGL OpenGL context")

@@ -6,6 +6,7 @@ import threading
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.graphics import Color, Fbo, Rectangle
+from kivy.logger import Logger
 from kivy.graphics.opengl import (
     GL_ACTIVE_TEXTURE,
     GL_BLEND,
@@ -64,12 +65,26 @@ class MpvVideoWidget(Widget):
             self._rect.texture = self._fbo.texture
             self._needs_render.set()
 
+    @staticmethod
+    def _mpv_log(loglevel: str, component: str, message: str):
+        msg = f"mpv [{component}]: {message.rstrip()}"
+        if loglevel in ("fatal", "error"):
+            Logger.error(msg)
+        elif loglevel == "warn":
+            Logger.warning(msg)
+        elif loglevel == "info":
+            Logger.info(msg)
+        else:
+            Logger.debug(msg)
+
     def _init_mpv(self, _dt):
+        Logger.info("mpv: Initializing MPV player (vo=libmpv, hwdec=auto)")
         self._player = mpv.MPV(
             vo="libmpv",
             hwdec="auto",
             loop_file="inf",
             loglevel="warn",
+            log_handler=self._mpv_log,
         )
         self._ctx = mpv.MpvRenderContext(
             self._player,
@@ -78,6 +93,7 @@ class MpvVideoWidget(Widget):
         )
         self._ctx.update_cb = self._needs_render.set
         self._update_rect()
+        Logger.info(f"mpv: Playing {self.video_path}")
         self._player.play(self.video_path)
 
     def _tick(self, _dt):
@@ -121,6 +137,7 @@ class MpvVideoWidget(Widget):
             self._player.seek(ratio * self._player.duration, reference="absolute")
 
     def close(self):
+        Logger.info("mpv: Shutting down player")
         if self._ctx is not None:
             self._ctx.free()
             self._ctx = None
