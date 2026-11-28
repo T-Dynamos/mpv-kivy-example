@@ -13,42 +13,50 @@ from kivy.logger import Logger
 _GET_PROC_CB = None
 
 
+def _sdl_search_order():
+    for mod in sys.modules:
+        if "sdl3" in mod:
+            return ("SDL3", "SDL2")
+        if "sdl2" in mod:
+            return ("SDL2", "SDL3")
+    return ("SDL3", "SDL2")
+
+
 def _find_sdl():
+    order = _sdl_search_order()
+    patterns = {
+        "SDL3": ("libSDL3-*.so*",),
+        "SDL2": ("libSDL2-*.so*",),
+    }
+    sonames = {
+        "SDL3": ("libSDL3.so.0", "libSDL3.so"),
+        "SDL2": ("libSDL2-2.0.so.0", "libSDL2.so"),
+    }
+
+    # Search site-packages (Kivy.libs / kivy.libs) first
     for p in sys.path:
         for libs_dir in ("Kivy.libs", "kivy.libs"):
             d = os.path.join(p, libs_dir)
             if os.path.isdir(d):
-                for pat in ("libSDL3-*.so*", "libSDL2-*.so*"):
-                    for f in glob.glob(os.path.join(d, pat)):
-                        bn = os.path.basename(f)
-                        if "ttf" not in bn and "mix" not in bn and "image" not in bn:
-                            return f
-    try:
-        with open("/proc/self/maps", "r", encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                if "libSDL" in line and ".so" in line:
-                    path = line.strip().split()[-1]
-                    bn = os.path.basename(path)
-                    if (
-                        (bn.startswith("libSDL3") or bn.startswith("libSDL2"))
-                        and "ttf" not in bn
-                        and "mix" not in bn
-                        and "image" not in bn
-                        and os.path.exists(path)
-                    ):
-                        return path
-    except OSError:
-        pass
-    for name in ("SDL3", "SDL2"):
+                for name in order:
+                    for pat in patterns[name]:
+                        for f in glob.glob(os.path.join(d, pat)):
+                            bn = os.path.basename(f)
+                            if "ttf" not in bn and "mix" not in bn and "image" not in bn:
+                                return f
+
+    # Fall back to system libraries
+    for name in order:
         found = ctypes.util.find_library(name)
         if found:
             return found
-    for soname in ("libSDL2-2.0.so.0", "libSDL2.so", "libSDL3.so.0", "libSDL3.so"):
-        try:
-            ctypes.CDLL(soname)
-            return soname
-        except OSError:
-            continue
+    for name in order:
+        for soname in sonames[name]:
+            try:
+                ctypes.CDLL(soname)
+                return soname
+            except OSError:
+                continue
     return None
 
 
