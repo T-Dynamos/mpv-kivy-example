@@ -8,9 +8,9 @@ Minimal standalone example demonstrating **`libmpv` (`0.42.0`)** hardware-accele
 ## Features
 
 - **`libmpv 0.42.0`** built via `MesonRecipe(skip_python=True)` with `libmpv=true`, `egl-android=enabled`, `android-media-ndk=enabled`, and `opensles=enabled`.
-- **`libplacebo 7.387.0`** with OpenGL ES + Vulkan 1.4 (`Vulkan-Headers v1.4.335`).
-- **`libass 0.17.5`**, **`fribidi 1.0.18`**, **`harfbuzz`**, and **`ffmpeg`** (`--enable-jni --enable-mediacodec`).
-- **Hardware decoding (`mediacodec-copy`)**: registers Android's `JavaVM*` with `libavcodec.av_jni_set_java_vm()` via `SDL_AndroidGetJNIEnv()`, and renders frames into a Kivy `Fbo` using `MpvRenderContext("opengl")` + `SDL_GL_GetProcAddress`.
+- **`libplacebo 7.387.0`** with OpenGL ES.
+- **`libass 0.17.5`**, **`libfribidi 1.0.18`**, **`harfbuzz`**, and **`ffmpeg`** (`--enable-jni --enable-mediacodec`).
+- **Hardware decoding (`mediacodec-copy`)**: registers Android's `JavaVM*` with `libavcodec.av_jni_set_java_vm()` via `SDL_GetAndroidJNIEnv()` / `SDL_AndroidGetJNIEnv()`, and renders frames into a Kivy `Fbo` using `MpvRenderContext("opengl")` + `SDL_GL_GetProcAddress`.
 
 ## Project Structure
 
@@ -22,14 +22,15 @@ Minimal standalone example demonstrating **`libmpv` (`0.42.0`)** hardware-accele
 ├── assets/
 │   └── sample.mp4               # Bundled 720p H.264/AAC test clip
 └── p4alocalrecipes/
-    ├── fribidi/__init__.py
+    ├── libfribidi/__init__.py
     ├── harfbuzz/__init__.py
     ├── libass/__init__.py
     ├── libplacebo/__init__.py
     ├── libmpv/__init__.py       # Native libmpv.so (0.42.0) Meson recipe
     └── mpv/                     # python-mpv (1.0.8) PyProjectRecipe + Android patch
         ├── __init__.py
-        └── android.patch
+        ├── android.patch
+        └── mpv_android.py
 ```
 
 ## Run on Linux
